@@ -63,24 +63,31 @@ class PasajeModel {
         }
     }
 
+    /**
+     * Borrar pasaje a traves de el id
+     * 
+     * @param type $idpasaje
+     * @return string
+     */
     public function borrarPasaje($idpasaje) {
         $conexion = $this->db->getConexion();
 
-// Verificar si el pasaje existe
-        $query = "SELECT * FROM pasaje WHERE idpasaje = ?";
+        // Verificar si el pasaje existe
+        $query = "SELECT * FROM pasaje WHERE idpasaje = :id";
         $stmt = $conexion->prepare($query);
-        $stmt->bind_param("i", $idpasaje);
+        $stmt->bindParam(':id', $idpasaje, PDO::PARAM_INT);
         $stmt->execute();
-        $stmt->store_result();
 
-        if ($stmt->num_rows === 0) {
+        // Verificar si se encontró el pasaje
+        $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        if (empty($resultados)) {
             return "ERROR AL BORRAR. EL PASAJE NO EXISTE";
         }
 
-// Borrar el pasaje
-        $query = "DELETE FROM pasaje WHERE idpasaje = ?";
+        // Borrar el pasaje
+        $query = "DELETE FROM pasaje WHERE idpasaje = :id";
         $stmt = $conexion->prepare($query);
-        $stmt->bind_param("i", $idpasaje);
+        $stmt->bindParam(':id', $idpasaje, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
             return "PASAJE BORRADO CORRECTAMENTE";
@@ -89,37 +96,39 @@ class PasajeModel {
         }
     }
 
+    /**
+     * Actualizar pasaje
+     * 
+     * @param type $pasaje
+     * @return string
+     */
     public function actualizarPasaje($pasaje) {
         $conexion = $this->db->getConexion();
 
-// Verificar si el pasajero y el vuelo ya existen en la tabla pasajes
+        // Verificar si el pasajero y el vuelo ya existen en la tabla pasajes
         $query = "SELECT * FROM pasaje WHERE pasajerocod = ? AND identificador = ?";
         $stmt = $conexion->prepare($query);
-        $stmt->bind_param("is", $pasaje->pasajerocod, $pasaje->identificador);
-        $stmt->execute();
-        $stmt->store_result();
-        if ($stmt->num_rows > 0) {
-            return "ERROR AL ACTUALIZAR. EL PASAJERO " . $pasaje->pasajerocod . " YA ESTÁ EN EL VUELO " . $pasaje->identificador;
+        $stmt->execute([$pasaje['pasajerocod'], $pasaje['identificador']]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($result) {
+            return "ERROR AL ACTUALIZAR. EL PASAJERO " . $pasaje['pasajerocod'] . " YA ESTÁ EN EL VUELO " . $pasaje['identificador'];
         }
-        $stmt->close();
 
-// Verificar si el asiento está ocupado en el mismo vuelo
+        // Verificar si el asiento está ocupado en el mismo vuelo
         $query = "SELECT * FROM pasaje WHERE identificador = ? AND numasiento = ?";
         $stmt = $conexion->prepare($query);
-        $stmt->bind_param("si", $pasaje->identificador, $pasaje->numasiento);
-        $stmt->execute();
-        $stmt->store_result();
-        if ($stmt->num_rows > 0) {
-            return "ERROR AL ACTUALIZAR. EL NÚMERO DE ASIENTO " . $pasaje->numasiento . " YA ESTÁ OCUPADO EN EL VUELO " . $pasaje->identificador;
+        $stmt->execute([$pasaje['identificador'], $pasaje['numasiento']]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($result) {
+            return "ERROR AL ACTUALIZAR. EL NÚMERO DE ASIENTO " . $pasaje['numasiento'] . " YA ESTÁ OCUPADO EN EL VUELO " . $pasaje['identificador'];
         }
-        $stmt->close();
 
-// Actualizar el pasaje
+        // Actualizar el pasaje
         $query = "UPDATE pasaje SET pasajerocod = ?, identificador = ?, numasiento = ?, clase = ?, pvp = ? WHERE idpasaje = ?";
         $stmt = $conexion->prepare($query);
-        $stmt->bind_param("issidi", $pasaje->pasajerocod, $pasaje->identificador, $pasaje->numasiento, $pasaje->clase, $pasaje->pvp, $pasaje->idpasaje);
+        $stmt->execute([$pasaje['pasajerocod'], $pasaje['identificador'], $pasaje['numasiento'], $pasaje['clase'], $pasaje['pvp'], $pasaje['idpasaje']]);
 
-        if ($stmt->execute()) {
+        if ($stmt->rowCount() > 0) {
             return "REGISTRO ACTUALIZADO CORRECTAMENTE";
         } else {
             return "ERROR AL ACTUALIZAR EL PASAJE";

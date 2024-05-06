@@ -6,8 +6,8 @@ $vuelosModel = new VuelosModel();
 @header("Content-type: application/json");
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
-    if (isset($_GET['idpasaje'])) {
-        $res = $vuelosModel->obtenerInfoVuelo($_GET['idpasaje']);
+    if (isset($_GET['identificador'])) {
+        $res = $vuelosModel->obtenerInfoVuelo($_GET['identificador']);
         echo json_encode($res);
         exit();
     } else {
