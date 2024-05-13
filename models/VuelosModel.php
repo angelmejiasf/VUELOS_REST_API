@@ -43,16 +43,17 @@ class VuelosModel extends Basedatos {
      * @return array Array asociativo con la información del vuelo.
      */
     public function obtenerInfoVuelo($id_vuelo) {
-        $conexion = $this->db->getConexion();
+        $conexion = $this->getConexion();
+        ;
 
         // Consulta 
-        $query = "SELECT vuelo.identificador AS id_vuelo, origen.codigo AS codigo_origen, origen.nombre AS nombre_origen, origen.pais AS pais_origen, destino.codigo AS codigo_destino, destino.nombre AS nombre_destino, destino.pais AS pais_destino, vuelo.tipo, COUNT(pasaje.identificador) AS num_pasajeros FROM vuelo INNER JOIN aeropuerto AS origen ON vuelo.origen = origen.codigo INNER JOIN aeropuerto AS destino ON vuelo.destino = destino.codigo LEFT JOIN pasaje ON vuelo.identificador = pasaje.identificador WHERE vuelo.identificador = ?";
+        $query = "SELECT * FROM vuelo WHERE identificador=:identificador";
         $stmt = $conexion->prepare($query);
-        $stmt->bind_param("i", $id_vuelo);
+        $stmt->bindparam(":identificador", $id_vuelo);
         $stmt->execute();
-        $result = $stmt->get_result();
+       
 
-        $vuelo = $result->fetch_assoc();
+        $vuelo = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         return $vuelo;
     }
